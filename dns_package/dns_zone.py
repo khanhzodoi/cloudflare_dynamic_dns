@@ -1,9 +1,11 @@
-import json
+"""Module providing a DNSZone class to help add remove update list DNS Record in a specific zone."""
 import requests
-from requests.exceptions import RequestException  
-from dns_package.dns_record import *
+from requests.exceptions import RequestException
+from dns_package.dns_record import DNSRecord
+
 
 class DNSZone():
+    """DNSZone Class"""
     def __init__(self, logger, zone_identifier, email_account, token):
         """
         Constructor for the DNSZone class.
@@ -40,9 +42,10 @@ class DNSZone():
             None
         """
         if not isinstance(record, DNSRecord):
-            self.logger.error("Record is not an instance of DNSRecord or its subclass.")
+            self.logger.error(
+                "Record is not an instance of DNSRecord or its subclass.")
             return
-        
+
         self.list_dns_records()
         existing_record = self.find_existing_record(record)
 
@@ -50,7 +53,6 @@ class DNSZone():
             self.update_existing_record(existing_record, record)
         else:
             self.logger.error("Record not found in DNS records.")
-
 
     def find_existing_record(self, record):
         """
@@ -63,10 +65,9 @@ class DNSZone():
             dict or None: The existing DNS record as a dictionary, or None if not found.
         """
         for each_record in self.dns_records:
-            if record.name == each_record["name"] and record.type == each_record["type"]:
+            if record.name == each_record["name"] and record.record_type == each_record["type"]:
                 return each_record
         return None
-    
 
     def update_existing_record(self, existing_record, new_record):
         """
@@ -79,29 +80,36 @@ class DNSZone():
         Returns:
             None
         """
-        url = self.cloud_flare_links["update"].format(self.zone_identifier, existing_record["id"])
+        url = self.cloud_flare_links["update"].format(
+            self.zone_identifier, existing_record["id"])
         payload = {
             "content": str(new_record.content),
             "name": str(new_record.name),
             "proxied": bool(new_record.proxied),
-            "type": str(new_record.type),
+            "type": str(new_record.record_type),
             "comment": str(new_record.comment),
             "tags": [],
             "ttl": int(new_record.ttl)
         }
 
         try:
-            with requests.request("PUT", url, json=payload, headers=self.headers) as response:
+            with requests.request(
+                "PUT", url, json=payload, headers=self.headers, timeout=5
+            ) as response:
                 if response.status_code == 200:
                     data = response.json()
-                    # formatted_data = json.dumps(data["result"], indent=4)  # Prettify the JSON
-                    self.logger.info("> Finished updating - Cloudflare response: " + str(data["result"]))
+                    self.logger.info(
+                        "> Finished updating - Cloudflare response: " +
+                        str(data["result"])
+                    )
                 else:
-                    self.logger.error(f"Failed to update record. HTTP status code: {response.status_code}")
+                    self.logger.error(
+                        f"Failed to update record. HTTP status code: {response.status_code}"
+                    )
 
-        except RequestException as e:
-            self.logger.error(f"An error occurred during the request: {str(e)}")
-
+        except RequestException as error:
+            self.logger.error(
+                f"An error occurred during the request: {str(error)}")
 
     def add_dns_record(self, record):
         """
@@ -114,7 +122,6 @@ class DNSZone():
             None
         """
         self.dns_records.append(record)
-
 
     def remove_dns_record(self, record):
         """
@@ -129,7 +136,6 @@ class DNSZone():
         if record in self.dns_records:
             self.dns_records.remove(record)
 
-
     def list_dns_records(self):
         """
         List DNS records from Cloudflare and update the internal records list.
@@ -140,13 +146,14 @@ class DNSZone():
         url = self.cloud_flare_links["list"].format(self.zone_identifier)
 
         try:
-            with requests.request("GET", url, headers=self.headers) as response:
+            with requests.request("GET", url, headers=self.headers, timeout=10) as response:
                 if response.status_code == 200:
                     if data := response.json():
                         self.dns_records = data["result"]
                 else:
-                    self.logger.error('There was some error. HTTP status code: ' + response.status_code)
+                    self.logger.error(
+                        f'There was some error. HTTP status code: {str(response.status_code)}'
+                    )
 
-        except RequestException as e:  # Catch network-related exceptions
-            self.logger.error('An error occurred during the request:', str(e))
-
+        except RequestException as error:  # Catch network-related exceptions
+            self.logger.error('An error occurred during the request:', str(error))

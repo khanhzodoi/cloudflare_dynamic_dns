@@ -1,9 +1,10 @@
+"""Module Logger providing logging stuffs"""
 import logging
 import os
 
 
 def get_logger(log_file_path):
-
+    """Get logger for file and console handlers"""
     # Generate log file 
     if not generate_log_file(log_file_path):
         return None
@@ -32,6 +33,7 @@ def get_logger(log_file_path):
 
 
 def generate_log_file(log_file_path):
+    """Helper to generate the log file with a given path"""
     try:
         if not os.path.exists(log_file_path):
             directory_path = os.path.dirname(log_file_path)
@@ -40,11 +42,14 @@ def generate_log_file(log_file_path):
                 os.makedirs(directory_path)
 
             # Create an empty log file 
-            with open(log_file_path, 'w') as file:
+            with open(log_file_path, 'w', encoding="utf-8"):
                 pass
-        
+
         return True
 
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
+    except FileNotFoundError as error:
+        print(f"File not found: {str(error)}")
+        return False
+    except PermissionError as error:
+        print(f"Permission denied: {str(error)}")
         return False
