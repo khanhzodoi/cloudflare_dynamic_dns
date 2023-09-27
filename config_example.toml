@@ -1,0 +1,4 @@
+
+[paths]
+credential_file_path = "<FULL_PATH_TO_JSON_FILE>"
+log_file_path = "<FULL_PATH_TO_LOG_FILE>"
