@@ -1,6 +1,6 @@
 # Activate the Python virtual environment
-$virtualEnvPath = "F:\Tools\Dynamic_DNS\venv\Scripts\Activate.ps1"
-$scriptDirectory = "F:\Tools\Dynamic_DNS\"
+$virtualEnvPath = "F:\Labs\cloudflare_dynamic_dns\venv\Scripts\Activate.ps1"
+$scriptDirectory = "F:\Labs\cloudflare_dynamic_dns"
 
 
 
